@@ -1,0 +1,12 @@
+{
+	"id":"001",
+	"name":"Level 1",
+	"rounds":
+	[
+		{"name":"1/5", "image":"books.jpg", "words":["books", "rainbow", "dog", "house"], "answer":0},
+		{"name":"2/5", "image":"kitten.jpg", "words":["dog", "kitten", "lion", "clown"], "answer":1},
+		{"name":"3/5", "image":"shoes.jpg", "words":["train", "fish", "shoes", "ticket"], "answer":2},
+		{"name":"4/5", "image":"flowers.jpg", "words":["balloon", "boat", "flowers", "car"], "answer":2},
+		{"name":"5/5", "image":"tracks.jpg", "words":["road", "sidewalk", "path", "tracks"], "answer":3}
+	]
+}

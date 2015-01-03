@@ -1,0 +1,481 @@
+<html>
+<head>
+	<title>PIC</title>
+	<meta name="viewport" content="width=800, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<link rel="stylesheet" type="text/css" href="animate.css">
+	<script>
+	
+	var gCurrRound;
+	var gCurrLevel;
+	var gLastTickRound;
+	var gTickTimer = null;
+
+	var gUser;
+	var gActions;
+	function loadUser()
+	{
+		gUser = 
+		{
+			"score":0,
+			"name":"Steve"
+		};
+		
+		setCurrentScore(gUser["score"]);
+		setCurrentName(gUser["name"]);
+	}
+	
+	function loadActions()
+	{
+		gActions = 
+		[
+			{"type":"freeze", "count":1},
+			{"type":"ruleout", "count":1},
+			// {"type":"friendhelp", "count":1},
+			{"type":"bonustime", "count":1}
+		];
+		
+		setActions(gActions);
+	}
+	
+	function setActions(actions)
+	{
+		for(var a in actions)
+		{
+			var action = actions[a];
+			switch(action["type"])
+			{
+			case "freeze":
+				setFreezeActions(action["count"]);
+				break;
+			case "ruleout":
+				setRuleOutActions(action["count"]);
+				break;
+			case "friendhelp":
+				setFriendHelpActions(action["count"]);
+				break;
+			case "bonustime":
+				setBonusTimeActions(action["count"]);
+				break;
+			default:
+				console.log("unknown action", action);
+			}
+		}
+	}
+
+
+	function addAction(count)
+	{
+		var action_container = document.getElementById("action_container");
+		var action = document.createElement("div");
+		
+		action.className = "action";
+		action_container.appendChild(action);
+		return action;
+	}
+
+	function setFreezeActions(count)
+	{
+		var action = addAction(count);
+		action.textContent = "Freeze For 5";
+		action.addEventListener("click", onFreezeFor5);
+	}
+
+	function setRuleOutActions(count)
+	{
+		var action = addAction(count);
+		action.textContent = "Rule Out Word";
+		action.addEventListener("click", onRuleOutWord);
+	}
+
+	function setFriendHelpActions(count)
+	{
+		var action = addAction(count);
+		action.textContent = "Help From Friend";
+		action.addEventListener("click", onHelpFromFriend);
+	}
+
+	function setBonusTimeActions(count)
+	{
+		var action = addAction(count);
+		action.textContent = "Bonus Time";
+		action.addEventListener("click", onBonusTime);
+	}
+	
+	function awardPoints(points)
+	{
+		gUser["score"]+=points;
+		setCurrentScore(gUser["score"]);
+	}
+	
+	
+	function loadLevel(level, cb)
+	{
+		console.log("loadLevel", level)
+
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", "levels/"+level+"/index.json", true);
+		xhr.onreadystatechange = function(e) {
+			if(this.readyState == 4)
+			{
+				console.log("status:" + this.status);
+				if(this.status == 200)
+				{
+					console.log("making cb");
+					try
+					{
+						var level = JSON.parse(this.responseText);
+						cb(level);
+					}
+					catch(e)
+					{
+						cb(null);
+					}
+				}
+				else
+				{
+					cb(null);
+				}
+			}
+		}.bind(xhr);
+		xhr.send();
+	}
+
+	function resetRoundForLevel(round, level)
+	{
+		round["max_points"]-= 200;
+		if(round["max_points"] < 10)
+		{
+			round["max_points"] = 10;
+		}
+		
+		setupRoundForLevel(round, level);
+	}
+
+	function setupRoundForLevel(round, level)
+	{
+		console.log("setupRoundForLevel", round, level);
+		
+		var level_name = document.getElementById("level_name");
+		level_name.textContent = level["name"] + ": " + round["name"];
+		buildCoverBlocks();
+		setImage("levels/"+level["id"]+"/"+round["image"]);
+		setWords(round["words"]);
+		
+
+		if(!("max_points" in round))
+		{
+			round["max_points"] = 5000;
+		}
+		round["curr_points"] = round["max_points"];
+		if(!("max_time" in round))
+		{
+			round["max_time"] = 10;
+		}
+		round["curr_time"] = round["max_time"];
+
+		gCurrRound = round;
+		gCurrLevel = level;
+		
+		setCurrentPoints(gCurrRound["curr_points"]);
+		setCurrentTimeRemain(gCurrRound["curr_time"]);
+	}
+	
+	function setImage(imageURL)
+	{
+		console.log("setImage", imageURL);
+		var image = document.getElementById("image");
+		image.src = imageURL;
+	}
+	
+	function setWords(words)
+	{
+		console.log("setWords", words);
+		var words_container = document.getElementById("words_container");
+		words_container.innerHTML = "";
+		
+		for(var w in words)
+		{
+			var word = document.createElement("span");
+			word.textContent = words[w];
+			word.className = "word";
+			word.addEventListener("click", onGuessWord)
+			words_container.appendChild(word);
+		}
+	}
+	
+	
+	function setCurrentScore(score)
+	{
+		var current_score = document.getElementById("current_score");
+		current_score.textContent = parseInt(score);
+	}
+	
+	function setCurrentName(name)
+	{
+		var current_name = document.getElementById("current_name");
+		current_name.textContent = name;
+	}
+	
+	function setCurrentPoints(points)
+	{
+		var current_points = document.getElementById("current_points");
+		current_points.textContent = parseInt(points);
+	}
+
+	function setCurrentTimeRemain(t)
+	{
+		var current_time_remain = document.getElementById("current_time_remain");
+		current_time_remain.textContent = parseInt(t);
+	}
+	
+	function onGuessWord(e)
+	{
+		var word = e.target.textContent;
+		console.log("onGuessWord", word);
+
+		pause();
+		
+		if(word == gCurrRound["words"][gCurrRound.answer])
+		{
+			clearCoverBlocks();
+			awardPoints(gCurrRound["curr_points"]);
+			showAlert("Correct!", 2000);
+			setTimeout(function(){
+				advanceLevel(gCurrLevel);
+			}, 2000);
+		}
+		else
+		{
+			buildCoverBlocks();
+			showAlert("Try again...", 2000);
+			resetRoundForLevel(gCurrRound, gCurrLevel);
+			setTimeout(prerollAndPlay, 2000);
+		}
+	}
+	
+	function onFreezeFor5(e)
+	{
+		console.log("onFreezeFor5");
+		pause();
+		setTimeout(play, 5000);
+		
+	}
+	
+	function onRuleOutWord(e)
+	{
+		console.log("onRuleOutWord");
+		
+		var answer = gCurrRound["words"][gCurrRound.answer];
+		if(gCurrRound["words"].length > 1)
+		{
+			var idx = parseInt(Math.random()*1000)%gCurrRound["words"].length;
+			if( idx == gCurrRound.answer)
+			{
+				idx = (idx+1)%gCurrRound["words"].length;
+			}
+			
+			gCurrRound["words"].splice(idx, 1);
+			gCurrRound.answer = gCurrRound["words"].indexOf(answer);
+			setWords(gCurrRound["words"]);
+		}
+		
+	}
+	
+	function onHelpFromFriend(e)
+	{
+		console.log("onHelpFromFriend");
+		
+	}
+	
+	function onBonusTime(e)
+	{
+		console.log("onBonusTime");
+		gCurrRound["curr_time"]+=2;
+	}
+	
+	
+	function buildCoverBlocks()
+	{
+		clearCoverBlocks();
+		var cover = document.getElementById("image_cover");
+		for(var y=0; y<600; y+=60)
+		{
+			for(var x=0; x<800; x+=80)
+			{
+				var block = document.createElement("div");
+				block.className = "image_cover_block";
+				block.style["left"] = x + "px";
+				block.style["top"] = y + "px";
+				cover.appendChild(block);
+				
+			}
+		}
+	}
+
+	function clearCoverBlocks()
+	{
+		var cover = document.getElementById("image_cover");
+		cover.innerHTML = "";
+	}
+	
+	function removeCoverBlock()
+	{
+		var cover = document.getElementById("image_cover");
+		
+		var blockCount = cover.childNodes.length;
+		var rand = parseInt(Math.random()*1000)%blockCount;
+		var toRemove = cover.childNodes[rand];
+		
+		toRemove.className += " animated fadeOut";
+		console.log(toRemove.className);
+		// setTimeout(function(){
+		// 	toRemove.parentElement.removeChild(toRemove);
+		// },250);
+		
+	}
+	
+	function tickRound()
+	{
+		var now = new Date();
+		
+		removeCoverBlock();
+		
+		gCurrRound["curr_time"]-= ((now.getTime() - gLastTickRound.getTime())/1000);
+		gCurrRound["curr_points"] = gCurrRound["max_points"] * (gCurrRound["curr_time"]/gCurrRound["max_time"]);
+		setCurrentPoints(gCurrRound["curr_points"]);
+		setCurrentTimeRemain(gCurrRound["curr_time"]);
+		
+		gLastTickRound = now;
+		
+		if(gCurrRound["curr_time"]<=1)
+		{
+			buildCoverBlocks();
+			showAlert("Time's up!", 2000);
+			pause();
+			
+			resetRoundForLevel(gCurrRound, gCurrLevel);
+			setTimeout(prerollAndPlay, 2000);
+		}
+	}
+	
+	function pause()
+	{
+		if(gTickTimer)
+		{
+			clearInterval(gTickTimer);
+		}
+		gTickTimer = null;
+	}
+	
+	function prerollAndPlay()
+	{
+		showAlert("Ready...", 1000)
+		setTimeout(function(){
+		showAlert("Go!", 500)
+		}, 1000);
+		setTimeout(play, 1500);
+	}
+	
+	function play()
+	{
+		document.getElementById("words_container").style.visibility="";
+		gLastTickRound = new Date();
+		if(gTickTimer)
+		{
+			clearInterval(gTickTimer);
+		}
+		gTickTimer = setInterval(tickRound, 500);
+	}
+	
+	
+	function advanceLevel(level)
+	{
+		console.log("advanceLevel", level);
+		document.getElementById("words_container").style.visibility="hidden";
+		if(!("current_round" in level))
+		{
+			level["current_round"] = -1;
+		}
+		level["current_round"]+=1;
+		
+		if(level["current_round"] < level["rounds"].length)
+		{
+			var round = level["rounds"][level["current_round"]];
+			setupRoundForLevel(round, level);
+			prerollAndPlay();
+		}
+		else
+		{
+			buildCoverBlocks();
+			showAlert("Level complete!", 2000);
+		}
+		
+	}
+
+	function init()
+	{
+		console.log("init");
+		loadUser();
+		loadActions();
+		loadLevel("001", function(level) {
+			console.log("cb");
+			if(level)
+			{
+				console.log(level);
+				advanceLevel(level);
+			}
+			else
+			{
+				showAlert("Failed to load level", 2000);
+			}
+		});
+	}
+	
+	
+	function hideAlert()
+	{
+		var alert = document.getElementById("alert");
+		alert.textContent = "";
+		alert.style.display = "none";
+	}
+
+	function showAlert(txt, duration)
+	{
+		var alert = document.getElementById("alert");
+		alert.textContent = txt;
+		alert.style.display = "block";
+		setTimeout(hideAlert, duration);
+	}
+	
+	</script>
+	
+</head>
+<body onload="init()">
+	<div id="alert_container">
+		<div id="alert">alert
+		</div>
+	</div>
+	<div id="header">
+		<span id="level_name">PIC</span>
+		<div id="current_score_container">
+			<span id="current_name"></span>
+			<div id="current_score">0</div>
+			<img src="assets/coins.png" height="40">
+		</div>
+	</div>
+	<div id="image_container">
+		<div id="image_cover"></div>
+		<img id="image">
+	</div>
+	<div id="info_container">
+		<span id="current_points">100</span><img src="assets/coins.png" height="40">
+
+		<span id="current_time_remain">10</span>
+		<div id="words_container">
+		</div>
+	</div>
+	<div id="action_container">
+	</div>
+</body>
+</html>

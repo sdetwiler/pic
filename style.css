@@ -1,0 +1,156 @@
+body
+{
+	margin:auto;
+	width:800px;
+	background: #333333;
+}
+
+
+#alert_container
+{
+	position:relative;
+	z-index:1000;
+}
+#alert
+{
+	display:none;
+	position:absolute;
+	top:150px;
+	left:100px;
+	width:600px;
+	height:150px;
+	padding-top:50px;
+	background-color:#ffffff;
+	border: 1px solid black;
+	font-size:36pt;
+	text-align:center;
+}
+
+#header
+{
+	background: #aaaaaa;
+	height:60px;
+}
+	#level_name
+	{
+		font-size:36pt;
+		padding-left:10px;
+	}
+	#current_name
+	{
+		font-size:18pt;
+		padding-right:20px;
+	}
+	#current_score_container
+	{
+		float:right;
+		display:inline-block;
+		padding-right:10px;
+	}
+	#current_score
+	{
+		display:inline-block;
+		font-size:36pt;
+	}
+
+#image_container
+{
+	position:relative;
+	background-color: #ffffff;
+	
+	width:800px;
+	height:600px;
+
+	margin:0px;
+	padding:0px;
+	border:none;
+}
+	#image
+	{
+		position:absolute;
+		display:block;
+		width:800px;
+		z-index:997;
+	}
+	#image_cover
+	{
+		position:absolute;
+		top:0px;
+		display:block;
+		width:800px;
+		height:600px;
+		z-index:999;
+	}
+	
+	.image_cover_block
+	{
+		position:absolute;
+		display:inline-block;
+		width:82px;
+		height:62px;
+		background-color: #ffffff;
+		margin:0px;
+		padding:0px;
+		border:none;
+	}
+
+#info_container
+{
+	background-color: #aaaaaa;
+	text-align:center;
+}
+	#current_points
+	{
+		font-size:36pt;
+	}
+
+	#current_time_remain
+	{
+		float:right;
+		font-size:36pt;
+		padding-right:10px;
+	}
+	#current_time_remain:after
+	{
+		content: " sec";
+	}
+
+	#words_container
+	{
+		text-align:center;
+	}
+
+		.word
+		{
+			text-align:center;
+			margin:10px;
+			font-size:24pt;
+			cursor:pointer;
+			border: 1px solid black;
+			padding:5px;
+			display:inline-block;
+			width:150px;
+			background-color: #ffffff;
+		}
+
+#action_container
+{
+	text-align:center;
+	width:100%;
+	background-color: #aaaaaa;
+	padding-top:30px;
+	padding-bottom:10px;
+}
+	.action
+	{
+		width:150px;
+		display:inline-block;
+		margin:7px;
+
+		text-align:center;
+		font-size:24pt;
+		padding:5px;
+		cursor:pointer;
+		border: 1px solid black;
+		background-color: #ffffff;
+	}
