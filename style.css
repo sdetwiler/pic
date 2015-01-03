@@ -70,6 +70,7 @@ body
 		position:absolute;
 		display:block;
 		width:800px;
+		max-height:600px;
 		z-index:997;
 	}
 	#image_cover

@@ -329,10 +329,6 @@
 		
 		toRemove.className += " animated fadeOut";
 		console.log(toRemove.className);
-		// setTimeout(function(){
-		// 	toRemove.parentElement.removeChild(toRemove);
-		// },250);
-		
 	}
 	
 	function tickRound()
@@ -409,16 +405,34 @@
 		{
 			buildCoverBlocks();
 			showAlert("Level complete!", 2000);
+			setTimeout(function(){
+				loadNextLevel();
+			}, 2000);
 		}
 		
 	}
-
-	function init()
+	function loadNextLevel()
 	{
-		console.log("init");
-		loadUser();
-		loadActions();
-		loadLevel("001", function(level) {
+		var idstr = "";
+		var id = 0;
+		if(gCurrLevel)
+		{
+			id = parseInt(gCurrLevel.id);
+		}
+		id++;
+		
+		if(id<10)
+		{
+			idstr+="00";
+		}
+		else if(id<100)
+		{
+			idstr+="0";
+		}
+		
+		idstr+=id.toString();
+		
+		loadLevel(idstr, function(level) {
 			console.log("cb");
 			if(level)
 			{
@@ -427,9 +441,17 @@
 			}
 			else
 			{
-				showAlert("Failed to load level", 2000);
+				showAlert("You've reached the end!", 2000);
 			}
 		});
+	}
+
+	function init()
+	{
+		console.log("init");
+		loadUser();
+		loadActions();
+		loadNextLevel();
 	}
 	
 	
